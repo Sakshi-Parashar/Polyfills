@@ -154,8 +154,8 @@ class MyPromise {
 
 let prom4 = new MyPromise((resolve, reject) => {
   setTimeout(() => {
-    // resolve(47);
-    reject('Late error');
+    resolve(47);
+    // reject('Late error');
   }, 1000);
   // reject('Error 404');
 });
@@ -170,10 +170,14 @@ prom4
   })
   .myThen((res) => {
     console.log(res);
+    return res;
   })
   .myCatch((err) => {
     console.log(err);
     return err;
   })
-  .myCatch((err) => console.log(err, 'Again'))
-  .myFinally(() => console.log('Finally'));
+  .myCatch((err) => {
+    console.log(err, 'Again');
+    return err + 'Final';
+  })
+  .myFinally((data) => console.log(data, 'Finally'));
