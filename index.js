@@ -103,7 +103,7 @@ class MyPromise {
   res;
   isResolved = false;
   isRejected = false;
-  catchFunc;
+  catchChain = [];
   finallyFunc;
   thenChain = [];
   err;
@@ -121,8 +121,8 @@ class MyPromise {
     const myReject = (error) => {
       this.err = error;
       this.isRejected = true;
-      if (typeof this.catchFunc === 'function') {
-        this.catchFunc(this.err);
+      if (this.catchChain.length) {
+        this.catchChain.reduce((acc, catchFunc) => catchFunc(acc), this.err);
       }
       if (typeof this.finallyFunc === 'function') {
         this.finallyFunc();
@@ -140,9 +140,9 @@ class MyPromise {
   }
 
   myCatch(errCB) {
-    this.catchFunc = errCB;
+    this.catchChain.push(errCB);
     if (this.isRejected) {
-      this.catchFunc(this.err);
+      this.catchChain.reduce((acc, catchFunc) => catchFunc(acc), this.err);
     }
     return this;
   }
@@ -157,7 +157,8 @@ class MyPromise {
 
 let prom4 = new MyPromise((resolve, reject) => {
   setTimeout(() => {
-    resolve(47);
+    // resolve(47);
+    reject('Late error');
   }, 1000);
   // reject('Error 404');
 });
@@ -173,5 +174,9 @@ prom4
   .myThen((res) => {
     console.log(res);
   })
-  .myCatch((err) => console.log(err))
+  .myCatch((err) => {
+    console.log(err);
+    return err;
+  })
+  .myCatch((err) => console.log(err, 'Again'))
   .myFinally(() => console.log('Finally'));
