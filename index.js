@@ -68,3 +68,32 @@ console.log(
     return total * el;
   }, 1)
 );
+
+// Promise.all
+// Very very important
+Promise.myAll = function (promises) {
+  return new Promise((resolve, reject) => {
+    let resolved = 0;
+    let values = [];
+    promises.forEach((promise, idx) => {
+      promise
+        .then((res) => {
+          resolved++;
+          values[idx] = res;
+          if (resolved === promises.length) {
+            resolve(values);
+          }
+        })
+        .catch((err) => {
+          reject(err);
+        });
+    });
+  });
+};
+
+let prom1 = new Promise((resolve, reject) => resolve(42));
+let prom2 = new Promise((resolve) => resolve(15));
+let prom3 = new Promise((resolve, reject) => reject('Error'));
+Promise.myAll([prom1, prom2, prom3])
+  .then((values) => console.log('Resolved', values))
+  .catch((err) => console.log(err));
