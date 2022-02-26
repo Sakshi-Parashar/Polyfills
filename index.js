@@ -97,3 +97,81 @@ let prom3 = new Promise((resolve, reject) => reject('Error'));
 Promise.myAll([prom1, prom2, prom3])
   .then((values) => console.log('Resolved', values))
   .catch((err) => console.log(err));
+
+// Promise Implementation - very very important
+class MyPromise {
+  res;
+  isResolved = false;
+  isRejected = false;
+  catchFunc;
+  finallyFunc;
+  thenChain = [];
+  err;
+  constructor(callback) {
+    const myResolve = (val) => {
+      this.res = val;
+      this.isResolved = true;
+      if (this.thenChain.length) {
+        this.thenChain.reduce((acc, thenFunc) => thenFunc(acc), this.res);
+      }
+      if (typeof this.finallyFunc === 'function') {
+        this.finallyFunc();
+      }
+    };
+    const myReject = (error) => {
+      this.err = error;
+      this.isRejected = true;
+      if (typeof this.catchFunc === 'function') {
+        this.catchFunc(this.err);
+      }
+      if (typeof this.finallyFunc === 'function') {
+        this.finallyFunc();
+      }
+    };
+    callback(myResolve, myReject);
+  }
+
+  myThen(responseCB) {
+    this.thenChain.push(responseCB);
+    if (this.isResolved) {
+      this.thenChain.reduce((acc, thenFunc) => thenFunc(acc), this.res);
+    }
+    return this;
+  }
+
+  myCatch(errCB) {
+    this.catchFunc = errCB;
+    if (this.isRejected) {
+      this.catchFunc(this.err);
+    }
+    return this;
+  }
+
+  myFinally(finalCB) {
+    this.finallyFunc = finalCB;
+    if (this.isResolved || this.isRejected) {
+      this.finallyFunc();
+    }
+  }
+}
+
+let prom4 = new MyPromise((resolve, reject) => {
+  setTimeout(() => {
+    resolve(47);
+  }, 1000);
+  // reject('Error 404');
+});
+prom4
+  .myThen((res) => {
+    console.log(res);
+    return res + 2;
+  })
+  .myThen((res) => {
+    console.log(res);
+    return res * 2;
+  })
+  .myThen((res) => {
+    console.log(res);
+  })
+  .myCatch((err) => console.log(err))
+  .myFinally(() => console.log('Finally'));
