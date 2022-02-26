@@ -104,7 +104,6 @@ class MyPromise {
   isResolved = false;
   isRejected = false;
   catchChain = [];
-  finallyFunc;
   thenChain = [];
   err;
   constructor(callback) {
@@ -114,18 +113,12 @@ class MyPromise {
       if (this.thenChain.length) {
         this.thenChain.reduce((acc, thenFunc) => thenFunc(acc), this.res);
       }
-      if (typeof this.finallyFunc === 'function') {
-        this.finallyFunc();
-      }
     };
     const myReject = (error) => {
       this.err = error;
       this.isRejected = true;
       if (this.catchChain.length) {
         this.catchChain.reduce((acc, catchFunc) => catchFunc(acc), this.err);
-      }
-      if (typeof this.finallyFunc === 'function') {
-        this.finallyFunc();
       }
     };
     callback(myResolve, myReject);
@@ -148,9 +141,13 @@ class MyPromise {
   }
 
   myFinally(finalCB) {
-    this.finallyFunc = finalCB;
-    if (this.isResolved || this.isRejected) {
-      this.finallyFunc();
+    this.thenChain.push(finalCB);
+    this.catchChain.push(finalCB);
+    if (this.isResolved) {
+      this.thenChain.reduce((acc, thenFunc) => thenFunc(acc), this.res);
+    }
+    if (this.isRejected) {
+      this.catchChain.reduce((acc, catchFunc) => catchFunc(acc), this.err);
     }
   }
 }
