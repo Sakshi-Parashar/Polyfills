@@ -5,6 +5,9 @@ import './style.css';
 const appDiv = document.getElementById('app');
 appDiv.innerHTML = `<h1>JS Starter</h1>`;
 
+const btn = document.getElementById('btn');
+btn.addEventListener('click', onClick);
+
 var arr = [1, 2, 3, 4, 5, 1, 2, 3, 4, 5];
 console.log(arr);
 
@@ -154,8 +157,8 @@ class MyPromise {
 
 let prom4 = new MyPromise((resolve, reject) => {
   setTimeout(() => {
-    resolve(47);
-    // reject('Late error');
+    // resolve(47);
+    reject('Late error');
   }, 1000);
   // reject('Error 404');
 });
@@ -181,3 +184,173 @@ prom4
     return err + 'Final';
   })
   .myFinally((data) => console.log(data, 'Finally'));
+
+// Bind
+
+Function.prototype.myBind = function (...args) {
+  const func = this;
+  return function (...params2) {
+    let params = args.slice(1);
+    func.call(args[0], ...params, ...params2);
+  };
+};
+
+let name = {
+  firstName: 'Sakshi',
+  lastName: 'Parashar',
+};
+function myFunc(hometown, country, expertise) {
+  console.log(this.firstName, this.lastName, hometown, country, expertise);
+}
+
+let myFuncImpl = myFunc.myBind(name, 'Kanpur', 'India');
+myFuncImpl('Frontend');
+
+// Bind without call or apply
+Function.prototype.myBind2 = function (...args) {
+  const func = this;
+  return function (...args2) {
+    let ctx = args[0];
+    ctx.func = func;
+    ctx.func(...args.slice(1), ...args2);
+  };
+};
+let animal = {
+  name: 'Rocky',
+  breed: 'Golden Retriever',
+};
+function myFunc2(age, gender, weight) {
+  console.log(this.name, this.breed, age, gender, weight + 'lbs');
+}
+
+const myFunc2Impl = myFunc2.myBind2(animal, 21, 'Male');
+myFunc2Impl(70);
+
+// Call
+Function.prototype.myCall = function (...args) {
+  let ctx = args[0];
+  let params = args.slice(1);
+  let func = this;
+
+  ctx.func = func;
+  ctx.func(...params);
+};
+
+let vehicle = {
+  wheels: 4,
+  category: 'Car',
+};
+
+function vehicleDetails(brand, color, price) {
+  console.log(this.wheels + 'Wheeler', this.category, brand, color, price);
+}
+
+vehicleDetails.myCall(vehicle, 'Maruti', 'Red', '6L');
+
+// apply
+Function.prototype.myApply = function (...args) {
+  let ctx = args[0];
+  let params = args[1];
+  let func = this;
+
+  ctx.func = func;
+  ctx.func(...params);
+};
+
+let vehicle2 = {
+  wheels: 4,
+  category: 'Car',
+};
+
+function vehicleDetails2(brand, color, price) {
+  console.log(this.wheels + 'Wheeler', this.category, brand, color, price);
+}
+
+vehicleDetails2.myApply(vehicle2, ['Maruti', 'Red', '6L']);
+
+// Throttling
+function logClick() {
+  console.log('Clicked');
+}
+
+function throttle(func, delay) {
+  let flag = true; // Maintains a closure to initialize just once
+  return function () {
+    if (flag) {
+      func();
+      flag = false;
+      setTimeout(() => {
+        flag = true;
+      }, delay);
+    }
+  };
+}
+
+const betterClick = throttle(logClick, 3000);
+
+// function onClick() {
+//   betterClick();
+// }
+
+// debounce
+function debounce(func, delay) {
+  let timer;
+  return function () {
+    const self = this;
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      func();
+      // func.apply(self);
+    }, delay);
+  };
+}
+
+const betterClick2 = debounce(logClick, 3000);
+function onClick() {
+  betterClick2();
+}
+// Pipe - Executes function in an order with the output of fist function as input to second function and so on
+function getName(person) {
+  return person.name;
+}
+
+function getFirst6Letters(name) {
+  return name.substr(0, 6);
+}
+
+function reverse(name) {
+  return name.split('').reverse().join('');
+}
+
+function toUpper(name) {
+  return name.toUpperCase();
+}
+
+function pipe(...funcs) {
+  return function (...args) {
+    let res = funcs[0](...args);
+    for (let i = 1; i < funcs.length; i++) {
+      res = funcs[i](res);
+    }
+    return res;
+  };
+}
+console.log(
+  pipe(getName, toUpper, getFirst6Letters, reverse)({ name: 'SakshiParashar' })
+);
+
+// Compose - Opposite of pipe
+function compose(...funcs) {
+  funcs.reverse();
+  return function (args) {
+    return funcs.reduce((currArgs, func) => func(currArgs), args);
+  };
+}
+console.log(
+  compose(
+    reverse,
+    getFirst6Letters,
+    toUpper,
+    getName
+  )({ name: 'SakshiParashar' })
+);
